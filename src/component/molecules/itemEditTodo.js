@@ -1,14 +1,14 @@
 import { Box, Input } from '@chakra-ui/react';
 import { useState } from 'react';
 
-const ItemAddTodo = props => {
-  const [task, setTask] = useState('');
+const ItemEditTodo = props => {
+  const [task, setTask] = useState(props.task.title);
 
-  const handleAddTask = value => {
-    props.addTask(value);
+  const handleEditTask = (index, value) => {
+    props.editTask(index, value);
     setTask(null);
+    props.setEdit(false);
   };
-
   return (
     <Box
       bgColor={'white'}
@@ -21,11 +21,10 @@ const ItemAddTodo = props => {
       <Input
         value={task}
         onChange={e => setTask(e.currentTarget.value)}
-        placeholder={'Title of task ...'}
         // placeholderTextColor={'#6e767d'}
         onKeyPress={e => {
           if (e.key === 'Enter') {
-            handleAddTask(task);
+            handleEditTask(props.task.id, task);
           }
         }}
       />
@@ -38,4 +37,4 @@ const ItemAddTodo = props => {
   );
 };
 
-export default ItemAddTodo;
+export default ItemEditTodo;
