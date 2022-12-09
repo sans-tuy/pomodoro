@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -16,12 +16,12 @@ import ItemAddTodo from '../../component/molecules/itemAddTodo';
 import ItemEditTodo from '../../component/molecules/itemEditTodo';
 import { MdAddCircleOutline } from 'react-icons/md';
 
-function MyTimer({ expiryTimestamp }) {
+function MyTimer({ expiryTimestamp, autoStart, setExpired }) {
   const { seconds, minutes, isRunning, start, pause, resume, restart } =
     useTimer({
       expiryTimestamp,
-      onExpire: () => console.warn('onExpire called'),
-      autoStart: false,
+      onExpire: () => setExpired(e => !e),
+      autoStart: autoStart,
     });
 
   return (
@@ -29,28 +29,24 @@ function MyTimer({ expiryTimestamp }) {
       <div style={{ fontSize: '100px' }}>
         <span>{minutes}</span> : <span>{seconds}</span>
       </div>
-      <Button
-        onClick={start}
+      {!autoStart && (
+        <Button
+          onClick={start}
+          bgColor={'#0080C8'}
+          color={'white'}
+          width={'full'}
+        >
+          Start
+        </Button>
+      )}
+      {/* <Button
+        onClick={() => setExpired(e => !e)}
         bgColor={'#0080C8'}
         color={'white'}
         width={'full'}
       >
         Start
-      </Button>
-      {/* <p>{isRunning ? 'Running' : 'Not running'}</p>
-      <button onClick={start}>Start</button>
-      <button onClick={pause}>Pause</button>
-      <button onClick={resume}>Resume</button>
-      <button
-        onClick={() => {
-          // Restarts to 25 minutes timer
-          const time = new Date();
-          time.setSeconds(time.getSeconds() + 1500);
-          restart(time);
-        }}
-      >
-        Restart
-      </button> */}
+      </Button> */}
     </div>
   );
 }
@@ -63,6 +59,7 @@ function Main() {
   // const [tasks, setTasks] = useState([]);
   const [add, setAdd] = useState(false);
   const [edit, setEdit] = useState(false);
+  const [expired, setExpired] = useState(false);
   const [dataEdit, setDataEdit] = useState();
   const [tasks, setTasks] = useState([
     {
@@ -101,8 +98,6 @@ function Main() {
       return data;
     });
     setTasks([...task]);
-    // console.log('index: ', index);
-    // console.log('title: ', title);
   };
 
   const deleteTask = deleteIndex => {
@@ -112,6 +107,14 @@ function Main() {
   const handleAdd = () => {
     setAdd(true);
   };
+  const [tabIndex, setTabIndex] = useState(0);
+
+  useLayoutEffect(() => {
+    expired === true ? setTabIndex(1) : setTabIndex(0);
+    tabIndex === 1
+      ? (document.body.style.backgroundColor = '#008F53')
+      : (document.body.style.backgroundColor = '#0080c8');
+  }, [tabIndex, expired]);
 
   return (
     <Box mb={'30px'}>
@@ -130,10 +133,14 @@ function Main() {
           maxW={'760px'}
           mt={'20px'}
         >
-          <Tabs>
+          <Tabs index={tabIndex} onChange={index => setTabIndex(index)} isLazy>
             <TabList>
-              <Tab minW={'50%'}>Pomodoro</Tab>
-              <Tab minW={'50%'}>Break Time</Tab>
+              <Tab isDisabled={expired} minW={'50%'}>
+                Pomodoro
+              </Tab>
+              <Tab isDisabled={!expired} minW={'50%'}>
+                Break Time
+              </Tab>
             </TabList>
 
             <TabPanels>
@@ -146,7 +153,11 @@ function Main() {
                   maxW={'760px'}
                   mt={'20px'}
                 >
-                  <MyTimer expiryTimestamp={time} />
+                  <MyTimer
+                    expiryTimestamp={time}
+                    setExpired={setExpired}
+                    autoStart={false}
+                  />
                   <Text
                     textAlign={'center'}
                     fontSize="20px"
@@ -169,7 +180,23 @@ function Main() {
                 ))}
               </TabPanel>
               <TabPanel>
-                <MyTimer expiryTimestamp={timeBreak} />
+                <MyTimer
+                  expiryTimestamp={timeBreak}
+                  setExpired={setExpired}
+                  autoStart={true}
+                />
+                <Box mt={4} />
+                <iframe
+                  src="https://itch.io/embed-upload/6971421?color=000000"
+                  allowfullscreen=""
+                  width="100%"
+                  height="340"
+                  frameborder="0"
+                >
+                  <a href="https://aldolim66.itch.io/survive-in-space">
+                    Play Survive In Space on itch.io
+                  </a>
+                </iframe>
                 <Text
                   textAlign={'center'}
                   fontSize="20px"
@@ -183,14 +210,18 @@ function Main() {
           </Tabs>
         </Box>
         <hr style={{ width: '40%', marginTop: 15, marginBottom: 10 }} />
-        {add ? <ItemAddTodo addTask={addTask} /> : null}
-        {edit ? (
-          <ItemEditTodo
-            task={dataEdit}
-            editTask={completedEdit}
-            setEdit={setEdit}
-          />
-        ) : null}
+        {tabIndex === 0 && (
+          <Box>
+            {add ? <ItemAddTodo addTask={addTask} /> : null}
+            {edit ? (
+              <ItemEditTodo
+                task={dataEdit}
+                editTask={completedEdit}
+                setEdit={setEdit}
+              />
+            ) : null}
+          </Box>
+        )}
       </VStack>
       <Flex justifyContent={'end'} me={'3%'}>
         <Button
